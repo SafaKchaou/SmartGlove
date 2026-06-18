@@ -184,3 +184,99 @@ unsigned char I2C_Read(unsigned char sendAck)
     SSPCON2bits.ACKEN = 1;
     return val;
 }
+/*=============================================================================
+ *  MPU6050 - ACCELEROMETER
+ *=============================================================================*/
+#define MPU_WRITE         0xD0
+#define MPU_READ          0xD1
+#define REG_PWR_MGMT_1    0x6B
+#define REG_ACCEL_CONFIG  0x1C
+
+#define REG_ACCEL_XOUT_H  0x3B
+#define REG_ACCEL_XOUT_L  0x3C
+#define REG_ACCEL_YOUT_H  0x3D
+#define REG_ACCEL_YOUT_L  0x3E
+#define REG_ACCEL_ZOUT_H  0x3F
+#define REG_ACCEL_ZOUT_L  0x40
+
+#define AXIS_SIGN_X  1
+#define AXIS_SIGN_Y  1
+
+/*=============================================================================
+ *  GESTURE TUNING
+ *=============================================================================*/
+#define RIGHT_THRESHOLD   8000
+#define LEFT_THRESHOLD   -8000
+#define FORWARD_THRESHOLD  8000
+#define DEAD_ZONE         3000
+#define CONFIRM_COUNT        3
+
+#define CAL_SAMPLES    64
+#define CAL_DELAY_MS    5
+#define FILTER_SAMPLES   8
+#define FILTER_DELAY_MS  5
+
+/*=============================================================================
+ *  STATES
+ *=============================================================================*/
+typedef enum {
+    STATE_CENTER = 0,
+    STATE_LEFT,
+    STATE_RIGHT,
+    STATE_FORWARD,
+    STATE_UNKNOWN
+} GloveState;
+
+/*=============================================================================
+ *  UART DRIVER
+ *=============================================================================*/
+void UART_Init(void)
+{
+    TRISCbits.TRISC6 = 0;
+    TRISCbits.TRISC7 = 1;
+    SPBRG  = 129;
+    TXSTAbits.BRGH = 1;
+    TXSTAbits.SYNC = 0;
+    TXSTAbits.TXEN = 1;
+    RCSTAbits.SPEN = 1;
+}
+
+void UART_SendChar(unsigned char ch)
+{
+    while (!TXSTAbits.TRMT);
+    TXREG = ch;
+}
+
+/*=============================================================================
+ *  MPU6050 DRIVER
+ *=============================================================================*/
+void MPU6050_WriteReg(unsigned char reg, unsigned char val)
+{
+    I2C_Start();
+    I2C_Write(MPU_WRITE);
+    I2C_Write(reg);
+    I2C_Write(val);
+    I2C_Stop();
+    __delay_ms(5);
+}
+
+signed int MPU6050_ReadAxis(unsigned char regH)
+{
+    unsigned char hi, lo;
+    I2C_Start();
+    I2C_Write(MPU_WRITE);
+    I2C_Write(regH);
+    I2C_RepeatedStart();
+    I2C_Write(MPU_READ);
+    hi = I2C_Read(1);
+    lo = I2C_Read(0);
+    I2C_Stop();
+    return (signed int)(((unsigned int)hi << 8) | lo);
+}
+
+void MPU6050_Init(void)
+{
+    __delay_ms(150);
+    MPU6050_WriteReg(REG_PWR_MGMT_1, 0x00);
+    MPU6050_WriteReg(REG_ACCEL_CONFIG, 0x00);
+}
