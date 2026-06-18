@@ -1,18 +1,18 @@
-# Smart Glove — Gesture-Controlled Photo Navigation
+# Smart Glove — Gesture-Controlled Slide/Photo Navigation
 
-A wearable glove that detects hand tilt gestures to navigate photos on a laptop wirelessly.
+A wearable glove that detects hand tilt gestures to navigate slides and photos on a laptop wirelessly.
 
 ## Project Overview
 
-A wrist-mounted MPU6050 accelerometer detects hand tilt (LEFT / CENTER / RIGHT / FORWARD). A PIC16F877A microcontroller reads the sensor, displays the state on a 16×2 LCD, lights up a traffic light module, and sends a UART command to an ESP32-CAM. The ESP32-CAM forwards the command over WiFi to a Python script running on a laptop, which simulates keyboard presses to scroll through photos.
+A wrist-mounted MPU6050 accelerometer detects hand tilt (LEFT / CENTER / RIGHT / FORWARD). A PIC16F877A microcontroller reads the sensor, displays the state on a 16×2 LCD, lights up a traffic light module, and sends a UART command to an ESP32-CAM. The ESP32-CAM forwards the command over WiFi to a Python script running on a laptop, which simulates keyboard presses to scroll through slides and photos.
 
 ## Gesture Mapping
 
 | Gesture | LCD Display | Traffic Light | Key Press | Action |
 |---|---|---|---|---|
 | Hand flat | CENTER | Green | — | No action |
-| Roll wrist left | LEFT <<< | Yellow | ← Left arrow | Previous photo |
-| Roll wrist right | RIGHT >>> | Red | → Right arrow | Next photo |
+| Roll wrist left | LEFT <<< | Yellow | ← Left arrow | Previous slide/photo |
+| Roll wrist right | RIGHT >>> | Red | → Right arrow | Next slide/photo |
 | Tilt fingers down | EXIT vvv | All three on | Escape | Exit slideshow |
 
 ## Hardware Components
@@ -31,7 +31,7 @@ A wrist-mounted MPU6050 accelerometer detects hand tilt (LEFT / CENTER / RIGHT /
 ```
 MPU6050 --[I2C]--> PIC16F877A --[UART 9600]--> Voltage Divider ---> ESP32-CAM --[WiFi]--> Python Script ---> Keyboard Action
                        |                                                                      |
-                   LCD + LEDs                                                             Laptop (Photos)
+                   LCD + LEDs                                                             Laptop (Slides/Photos)
 ```
 
 ## Pin Connections
@@ -97,7 +97,7 @@ SmartGlove/
 2. Edit `Python/smartglove.py` — set `HOST` to the ESP32's IP address
 3. Connect laptop to the same phone hotspot
 4. Run: `python Python/smartglove.py`
-5. Open a photo viewer and tilt your hand to navigate
+5. Open a slide presentation or photo viewer and tilt your hand to navigate
 
 ## Configuration Notes
 
