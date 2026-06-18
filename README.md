@@ -73,8 +73,7 @@ SmartGlove/
 │   └── SmartGlove_WiFi.ino    # ESP32-CAM WiFi bridge
 ├── Python/
 │   └── smartglove.py          # Laptop-side keyboard controller
-└── Docs/
-    └── wiring_notes.txt       # Breadboard wiring reference
+└── wiring_notes.txt           # Breadboard wiring reference
 ```
 
 ## Setup Instructions
@@ -88,7 +87,7 @@ SmartGlove/
 6. Note the IP address printed
 
 ### 2. Program the PIC16F877A
-1. Open `PIC/main_v6.c` in MPLAB X IDE
+1. Open `PIC/main.c` in MPLAB X IDE
 2. Compiler: XC8 v1.41, Device: PIC16F877A
 3. Build and program via PICkit
 
@@ -102,13 +101,8 @@ SmartGlove/
 ## Configuration Notes
 
 - **WiFi:** Both ESP32-CAM and laptop must be on the same network (phone hotspot recommended, public WiFi has client isolation)
-- **Y-axis direction:** If forward tilt triggers the wrong direction, change `AXIS_SIGN_Y` from `1` to `-1` in `main_v6.c`
-- **Thresholds:** Adjust `RIGHT_THRESHOLD`, `LEFT_THRESHOLD`, `FORWARD_THRESHOLD` in `main_v6.c` if gestures are too sensitive or not sensitive enough
-
-## Authors
-
-- Student 1 — PIC firmware, hardware wiring, MPU6050 integration
-- Student 2 — ESP32-CAM WiFi bridge, Python laptop script
+- **Y-axis direction:** If forward tilt triggers the wrong direction, change `AXIS_SIGN_Y` from `1` to `-1` in `main.c`
+- **Thresholds:** Adjust `RIGHT_THRESHOLD`, `LEFT_THRESHOLD`, `FORWARD_THRESHOLD` in `main.c` if gestures are too sensitive or not sensitive enough
 
 ## Course
 
