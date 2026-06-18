@@ -111,3 +111,76 @@ void LCD_Init(void)
     LCD_Command(0x01); __delay_ms(2);
     LCD_Command(0x06);
 }
+/*=============================================================================
+ *  TRAFFIC LIGHT DRIVER
+ *=============================================================================*/
+void TrafficLight_Init(void)
+{
+    TRISBbits.TRISB0 = 0;
+    TRISBbits.TRISB1 = 0;
+    TRISBbits.TRISB2 = 0;
+    LED_RED    = 0;
+    LED_YELLOW = 0;
+    LED_GREEN  = 0;
+}
+
+void TrafficLight_Set(unsigned char red, unsigned char yellow, unsigned char green)
+{
+    LED_RED    = 0;
+    LED_YELLOW = 0;
+    LED_GREEN  = 0;
+    LED_RED    = red;
+    LED_YELLOW = yellow;
+    LED_GREEN  = green;
+}
+
+void TrafficLight_SelfTest(void)
+{
+    LED_RED    = 1; __delay_ms(350); LED_RED    = 0;
+    LED_YELLOW = 1; __delay_ms(350); LED_YELLOW = 0;
+    LED_GREEN  = 1; __delay_ms(350); LED_GREEN  = 0;
+}
+
+/*=============================================================================
+ *  I2C DRIVER
+ *=============================================================================*/
+void I2C_Wait(void)
+{
+    unsigned int timeout = 10000;
+    while (((SSPCON2 & 0x1F) || SSPSTATbits.R_W) && timeout)
+        timeout--;
+}
+
+void I2C_Init(void)
+{
+    TRISCbits.TRISC3 = 1;
+    TRISCbits.TRISC4 = 1;
+    SSPCON  = 0x28;
+    SSPCON2 = 0x00;
+    SSPSTAT = 0x00;
+    SSPADD  = 49;
+}
+
+void I2C_Start(void)         { I2C_Wait(); SSPCON2bits.SEN  = 1; I2C_Wait(); }
+void I2C_RepeatedStart(void) { I2C_Wait(); SSPCON2bits.RSEN = 1; I2C_Wait(); }
+void I2C_Stop(void)          { I2C_Wait(); SSPCON2bits.PEN  = 1; I2C_Wait(); }
+
+void I2C_Write(unsigned char data)
+{
+    I2C_Wait();
+    SSPBUF = data;
+    I2C_Wait();
+}
+
+unsigned char I2C_Read(unsigned char sendAck)
+{
+    unsigned char val;
+    I2C_Wait();
+    SSPCON2bits.RCEN  = 1;
+    I2C_Wait();
+    val = SSPBUF;
+    I2C_Wait();
+    SSPCON2bits.ACKDT = sendAck ? 0 : 1;
+    SSPCON2bits.ACKEN = 1;
+    return val;
+}
