@@ -16,4 +16,31 @@ print("  Tilt RIGHT   = Right arrow (next photo)")
 print("  Tilt FORWARD = Escape      (exit / go back)")
 print()
 
-# Command handling will be added next
+try:
+    while True:
+        data = sock.recv(1)
+        if not data:
+            print("Connection lost")
+            break
+        cmd = data.decode('utf-8', errors='ignore')
+
+        if cmd == 'R':
+            keyboard.press(Key.right)
+            keyboard.release(Key.right)
+            print("-> RIGHT arrow")
+        elif cmd == 'L':
+            keyboard.press(Key.left)
+            keyboard.release(Key.left)
+            print("<- LEFT arrow")
+        elif cmd == 'F':
+            keyboard.press(Key.esc)
+            keyboard.release(Key.esc)
+            print("** ESCAPE (forward tilt)")
+        elif cmd == 'C':
+            print("-- CENTER (no key press)")
+
+except KeyboardInterrupt:
+    print("\nStopped by user")
+finally:
+    sock.close()
+    print("Disconnected")
