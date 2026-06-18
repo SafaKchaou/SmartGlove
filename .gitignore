@@ -1,0 +1,33 @@
+# MPLAB X / XC8 build files
+*.d
+*.pre
+*.p1
+*.lst
+*.sym
+*.obj
+*.o
+*.hex
+*.hxl
+*.elf
+*.map
+*.cof
+*.xml
+build/
+dist/
+debug/
+nbproject/private/
+nbproject/Makefile-*
+
+# Arduino IDE
+*.elf
+*.bin
+
+# Python
+__pycache__/
+*.pyc
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini

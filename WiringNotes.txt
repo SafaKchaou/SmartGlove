@@ -1,0 +1,52 @@
+=======================================
+ SMART GLOVE — BREADBOARD WIRING NOTES
+=======================================
+
+PIC16F877A Power, Reset & Crystal:
+- Pin 11 (VDD) → 5V rail
+- Pin 32 (VDD) → 5V rail
+- Pin 12 (VSS) → GND rail
+- Pin 31 (VSS) → GND rail
+- Pin 1  (MCLR) → 10kΩ → 5V rail
+- Pin 13 (OSC1) → crystal leg 1 + 22pF cap to GND
+- Pin 14 (OSC2) → crystal leg 2 + 22pF cap to GND
+
+LCD (16x2, 4-bit parallel):
+- LCD pin 1  (VSS) → GND
+- LCD pin 2  (VDD) → 5V
+- LCD pin 3  (V0)  → POT wiper (POT ends: 5V and GND)
+- LCD pin 4  (RS)  → PIC RD0 (Pin 19)
+- LCD pin 5  (RW)  → GND
+- LCD pin 6  (EN)  → PIC RD1 (Pin 20)
+- LCD pins 7-10    → not connected
+- LCD pin 11 (D4)  → PIC RD4 (Pin 27)
+- LCD pin 12 (D5)  → PIC RD5 (Pin 28)
+- LCD pin 13 (D6)  → PIC RD6 (Pin 29)
+- LCD pin 14 (D7)  → PIC RD7 (Pin 30)
+- LCD pin 15 (A)   → 5V
+- LCD pin 16 (K)   → GND
+
+MPU6050:
+- VCC   → 3.3V rail (separate supply)
+- GND   → GND rail (common)
+- SDA   → PIC RC4 (Pin 23) + 10kΩ pull-up to 3.3V
+- SCL   → PIC RC3 (Pin 18) + 10kΩ pull-up to 3.3V
+- AD0   → GND (address 0x68)
+- FSYNC → GND
+- INT   → not connected
+
+Traffic Light Module:
+- GND → GND rail
+- R   → PIC RB0 (Pin 33)
+- Y   → PIC RB1 (Pin 34)
+- G   → PIC RB2 (Pin 35)
+
+ESP32-CAM:
+- 5V  → 5V rail
+- GND → GND rail
+- GPIO 13 → voltage divider junction
+
+Voltage Divider (PIC TX 5V → 3.3V for ESP32):
+- PIC RC6/TX (Pin 25) → 10kΩ → junction
+- Junction → 10kΩ → 10kΩ → GND (two 10kΩ in series = 20kΩ)
+- Junction → wire → ESP32-CAM GPIO 13
