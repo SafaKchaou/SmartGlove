@@ -26,5 +26,20 @@ void setup() {
 }
 
 void loop() {
-    // UART forwarding will be added next
+    WiFiClient client = wifiServer.available();
+
+    if (client) {
+        Serial.println("Client connected!");
+        while (client.connected()) {
+            if (Serial2.available()) {
+                char cmd = Serial2.read();
+                client.print(cmd);
+                Serial.print("Forwarded: ");
+                Serial.println(cmd);
+            }
+            delay(10);
+        }
+        client.stop();
+        Serial.println("Client disconnected");
+    }
 }
