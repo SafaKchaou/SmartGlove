@@ -280,3 +280,157 @@ void MPU6050_Init(void)
     MPU6050_WriteReg(REG_PWR_MGMT_1, 0x00);
     MPU6050_WriteReg(REG_ACCEL_CONFIG, 0x00);
 }
+/*=============================================================================
+ *  CALIBRATION - both X and Y axes
+ *=============================================================================*/
+void Calibrate(signed long *baseX, signed long *baseY)
+{
+    unsigned char i;
+    signed long   sumX = 0;
+    signed long   sumY = 0;
+
+    LCD_Clear();
+    LCD_SetCursor(1, 0); LCD_Print("  CALIBRATING   ");
+    LCD_SetCursor(2, 0); LCD_Print("  KEEP STILL..  ");
+
+    for (i = 0; i < CAL_SAMPLES; i++)
+    {
+        sumX += MPU6050_ReadAxis(REG_ACCEL_XOUT_H);
+        sumY += MPU6050_ReadAxis(REG_ACCEL_YOUT_H);
+        __delay_ms(CAL_DELAY_MS);
+    }
+    *baseX = sumX / CAL_SAMPLES;
+    *baseY = sumY / CAL_SAMPLES;
+}
+
+/*=============================================================================
+ *  FILTERED ACCEL READ
+ *=============================================================================*/
+void GetFilteredAccel(signed int *outX, signed int *outY)
+{
+    unsigned char i;
+    signed long   sumX = 0;
+    signed long   sumY = 0;
+
+    for (i = 0; i < FILTER_SAMPLES; i++)
+    {
+        sumX += MPU6050_ReadAxis(REG_ACCEL_XOUT_H);
+        sumY += MPU6050_ReadAxis(REG_ACCEL_YOUT_H);
+        __delay_ms(FILTER_DELAY_MS);
+    }
+    *outX = (signed int)(sumX / FILTER_SAMPLES);
+    *outY = (signed int)(sumY / FILTER_SAMPLES);
+}
+
+/*=============================================================================
+ *  STATE OUTPUT
+ *=============================================================================*/
+void ApplyState(GloveState state)
+{
+    LCD_SetCursor(1, 0); LCD_Print("  SMART GLOVE   ");
+    LCD_ClearLine(2);
+
+    switch (state)
+    {
+        case STATE_CENTER:
+            TrafficLight_Set(0, 0, 1);
+            UART_SendChar('C');
+            LCD_SetCursor(2, 0); LCD_Print(" Hand: CENTER   ");
+            break;
+        case STATE_LEFT:
+            TrafficLight_Set(0, 1, 0);
+            UART_SendChar('L');
+            LCD_SetCursor(2, 0); LCD_Print(" Hand: LEFT <<< ");
+            break;
+        case STATE_RIGHT:
+            TrafficLight_Set(1, 0, 0);
+            UART_SendChar('R');
+            LCD_SetCursor(2, 0); LCD_Print(" Hand: RIGHT >>>");
+            break;
+        case STATE_FORWARD:
+            TrafficLight_Set(1, 1, 1);
+            UART_SendChar('F');
+            LCD_SetCursor(2, 0); LCD_Print(" Hand: EXIT vvv ");
+            break;
+        default:
+            break;
+    }
+}
+
+/*=============================================================================
+ *  MAIN
+ *=============================================================================*/
+void main(void)
+{
+    signed long   baselineX, baselineY;
+    signed int    rawX, rawY;
+    signed int    corrX, corrY;
+    GloveState    currentState = STATE_UNKNOWN;
+    GloveState    detectedState;
+    GloveState    pendingState = STATE_UNKNOWN;
+    unsigned char confirmCount = 0;
+
+    ADCON1 = 0x07;
+    TRISBbits.TRISB0 = 0;
+    TRISBbits.TRISB1 = 0;
+    TRISBbits.TRISB2 = 0;
+    PORTB = 0x00;
+    PORTC = 0x00;
+    PORTD = 0x00;
+
+    LCD_Init();
+    TrafficLight_Init();
+    I2C_Init();
+    MPU6050_Init();
+    UART_Init();
+
+    LCD_SetCursor(1, 0); LCD_Print("  SMART GLOVE   ");
+    LCD_SetCursor(2, 0); LCD_Print(" LED Self-Test  ");
+    TrafficLight_SelfTest();
+
+    Calibrate(&baselineX, &baselineY);
+
+    LCD_Clear();
+    LCD_SetCursor(1, 0); LCD_Print("  SMART GLOVE   ");
+    LCD_SetCursor(2, 0); LCD_Print("   CAL DONE!    ");
+    __delay_ms(800);
+
+    ApplyState(STATE_CENTER);
+    currentState = STATE_CENTER;
+
+    while (1)
+    {
+        GetFilteredAccel(&rawX, &rawY);
+        corrX = (signed int)(rawX - (signed int)baselineX) * AXIS_SIGN_X;
+        corrY = (signed int)(rawY - (signed int)baselineY) * AXIS_SIGN_Y;
+
+        if (corrX > RIGHT_THRESHOLD)
+            detectedState = STATE_RIGHT;
+        else if (corrX < LEFT_THRESHOLD)
+            detectedState = STATE_LEFT;
+        else if (corrY > FORWARD_THRESHOLD)
+            detectedState = STATE_FORWARD;
+        else if (corrX > -DEAD_ZONE && corrX < DEAD_ZONE &&
+                 corrY > -DEAD_ZONE && corrY < DEAD_ZONE)
+            detectedState = STATE_CENTER;
+        else
+            detectedState = currentState;
+
+        if (detectedState == pendingState)
+            confirmCount++;
+        else
+        {
+            pendingState = detectedState;
+            confirmCount = 1;
+        }
+
+        if (confirmCount >= CONFIRM_COUNT && pendingState != currentState)
+        {
+            currentState = pendingState;
+            confirmCount = 0;
+            ApplyState(currentState);
+        }
+
+        __delay_ms(50);
+    }
+}
