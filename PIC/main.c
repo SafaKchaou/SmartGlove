@@ -3,9 +3,9 @@
 #define _XTAL_FREQ 20000000
 #include <xc.h>
 
-/*=============================================================================
+/*
  *  CONFIG BITS — Hardware settings burned into the chip at programming time
- *=============================================================================*/
+*/
 #pragma config FOSC  = HS       /* Use the external high-speed 20 MHz crystal */
 #pragma config WDTE  = OFF      /* Watchdog timer off (we don't need auto-reset) */
 #pragma config PWRTE = ON       /* Wait a bit at power-on for voltages to stabilize */
@@ -15,9 +15,9 @@
 #pragma config WRT   = OFF      /* Allow writing to flash memory normally */
 #pragma config CP    = OFF      /* Don't protect program memory */
 
-/*=============================================================================
- *  PIN DEFINITIONS — Friendly names for the physical pins we're using
- *=============================================================================*/
+/*
+  PIN DEFINITIONS — Friendly names for the physical pins we're using
+ */
 
 /* LCD is wired in 4-bit mode on PORTD
    We only need 6 pins: RS, Enable, and 4 data lines (D4-D7) */
@@ -33,9 +33,10 @@
 #define LED_YELLOW  PORTBbits.RB1   /* Lights up when hand tilts LEFT */
 #define LED_GREEN   PORTBbits.RB2   /* Lights up when hand is CENTER */
 
-/*=============================================================================
- *  LCD DRIVER — Functions to talk to the 16x2 character LCD
- *=============================================================================*/
+/*
+   LCD DRIVER — Functions to talk to the 16x2 character LCD
+*/
+
 
 /* Pulse the Enable pin — this is how the LCD knows to read the data lines */
 void LCD_EnablePulse(void)
@@ -131,9 +132,10 @@ void LCD_Init(void)
     LCD_Command(0x06);   /* Cursor moves right after each character */
 }
 
-/*=============================================================================
- *  TRAFFIC LIGHT DRIVER — Controls the 3 LEDs that show hand direction
- *=============================================================================*/
+/*
+  TRAFFIC LIGHT DRIVER — Controls the 3 LEDs that show hand direction
+*/
+
 
 /* Set the 3 LED pins as outputs and turn them all off */
 void TrafficLight_Init(void)
@@ -167,10 +169,10 @@ void TrafficLight_SelfTest(void)
     LED_GREEN  = 1; __delay_ms(350); LED_GREEN  = 0;
 }
 
-/*=============================================================================
+/*
  *  I2C DRIVER — Bit-level communication with the MPU6050 sensor
  *  I2C is a 2-wire protocol: SDA (data) on RC4, SCL (clock) on RC3
- *=============================================================================*/
+ */
 
 /* Wait until the I2C hardware is done with the previous operation.
    The timeout prevents the program from hanging if something goes wrong. */
@@ -221,9 +223,10 @@ unsigned char I2C_Read(unsigned char sendAck)
     return val;
 }
 
-/*=============================================================================
- *  MPU6050 ACCELEROMETER — I2C addresses and register map
- *=============================================================================*/
+/*
+  MPU6050 ACCELEROMETER — I2C addresses and register map
+*/
+
 
 /* I2C device addresses (AD0 pin tied to GND gives address 0x68,
    shifted left by 1 for the R/W bit: write=0xD0, read=0xD1) */
@@ -246,11 +249,12 @@ unsigned char I2C_Read(unsigned char sendAck)
 #define AXIS_SIGN_X  1   /* X-axis: positive = RIGHT, negative = LEFT */
 #define AXIS_SIGN_Y  1   /* Y-axis: positive = FORWARD (tilt fingers down) */
 
-/*=============================================================================
+/*
  *  GESTURE TUNING — Thresholds that decide when a tilt counts as a gesture
  *  The MPU6050 in ±2g mode outputs ~16384 per 1g of acceleration.
  *  8000 is roughly half of gravity — a solid tilt, not too sensitive.
- *=============================================================================*/
+*/
+
 #define RIGHT_THRESHOLD    8000   /* X must exceed this to count as RIGHT */
 #define LEFT_THRESHOLD    -8000   /* X must go below this to count as LEFT */
 #define FORWARD_THRESHOLD  8000   /* Y must exceed this to count as FORWARD */
@@ -265,9 +269,10 @@ unsigned char I2C_Read(unsigned char sendAck)
 #define FILTER_SAMPLES   8   /* Average 8 readings per measurement cycle */
 #define FILTER_DELAY_MS  5   /* 5ms between each filter sample */
 
-/*=============================================================================
+/*
  *  STATES — All possible hand positions the glove can detect
- *=============================================================================*/
+*/
+
 typedef enum {
     STATE_CENTER = 0,   /* Hand flat — no action */
     STATE_LEFT,         /* Hand tilted left — previous slide/photo */
@@ -276,11 +281,12 @@ typedef enum {
     STATE_UNKNOWN       /* Startup state before first detection */
 } GloveState;
 
-/*=============================================================================
+/*
  *  UART DRIVER — Sends single characters to the ESP32-CAM over a wire
  *  TX pin: RC6 (Pin 25) → goes through a voltage divider → ESP32 GPIO 13
  *  Settings: 9600 baud, 8 data bits, no parity, 1 stop bit (8N1)
- *=============================================================================*/
+ */
+
 void UART_Init(void)
 {
     TRISCbits.TRISC6 = 0;   /* TX pin as output (we're sending data) */
@@ -301,9 +307,9 @@ void UART_SendChar(unsigned char ch)
     TXREG = ch;               /* Load the character — hardware sends it automatically */
 }
 
-/*=============================================================================
+/*
  *  MPU6050 DRIVER — Higher-level functions to configure and read the sensor
- *=============================================================================*/
+*/
 
 /* Write a value to one of the MPU6050's internal registers */
 void MPU6050_WriteReg(unsigned char reg, unsigned char val)
@@ -343,11 +349,12 @@ void MPU6050_Init(void)
     MPU6050_WriteReg(REG_ACCEL_CONFIG, 0x00);   /* ±2g range — maximum sensitivity */
 }
 
-/*=============================================================================
+/*
  *  CALIBRATION — Finds the "neutral" reading when hand is held flat
  *  We average many samples so small vibrations don't throw off the baseline.
  *  This baseline gets subtracted from all future readings.
- *=============================================================================*/
+*/
+
 void Calibrate(signed long *baseX, signed long *baseY)
 {
     unsigned char i;
@@ -372,11 +379,12 @@ void Calibrate(signed long *baseX, signed long *baseY)
     *baseY = sumY / CAL_SAMPLES;
 }
 
-/*=============================================================================
+/*
  *  FILTERED ACCEL READ — Smooths out sensor noise during normal operation
  *  Instead of reading the sensor once (which can be noisy), we take 8
  *  readings and average them for a much cleaner, more stable value.
- *=============================================================================*/
+ */
+
 void GetFilteredAccel(signed int *outX, signed int *outY)
 {
     unsigned char i;
@@ -394,7 +402,7 @@ void GetFilteredAccel(signed int *outX, signed int *outY)
     *outY = (signed int)(sumY / FILTER_SAMPLES);
 }
 
-/*=============================================================================
+/*
  *  STATE OUTPUT — When the hand state changes, update everything:
  *   1. LCD shows the current gesture
  *   2. Traffic light LEDs show the direction visually
@@ -405,7 +413,8 @@ void GetFilteredAccel(signed int *outX, signed int *outY)
  *    LEFT    = Yellow only
  *    RIGHT   = Red only
  *    FORWARD = All three on (clearly different from the others)
- *=============================================================================*/
+ */
+
 void ApplyState(GloveState state)
 {
     /* Always show project name on line 1 */
@@ -439,10 +448,11 @@ void ApplyState(GloveState state)
     }
 }
 
-/*=============================================================================
+/*
  *  MAIN — Program entry point. Sets up all hardware, calibrates, then runs
  *  the infinite loop that reads the sensor and reacts to hand movements.
- *=============================================================================*/
+ */
+
 void main(void)
 {
     /* Variables for sensor data and state tracking */
@@ -492,9 +502,10 @@ void main(void)
     ApplyState(STATE_CENTER);
     currentState = STATE_CENTER;
 
-    /*=========================================================================
+    /*
      *  MAIN LOOP — Runs forever, reading the sensor ~20 times per second
-     *=========================================================================*/
+     */
+
     while (1)
     {
         /* Step 1: Read the accelerometer (averaged over 8 samples for stability) */

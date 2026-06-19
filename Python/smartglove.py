@@ -3,7 +3,7 @@ import socket
 # pynput: lets us simulate keyboard key presses as if the user typed them
 from pynput.keyboard import Key, Controller
 
-# ===== ESP32-CAM connection settings =====
+#                ESP32-CAM connection settings    
 # HOST: the IP address the ESP32 prints to Serial Monitor when it connects to WiFi
 # PORT: must match the port number in the ESP32 Arduino code (wifiServer(8080))
 # Both this laptop and the ESP32 must be on the same WiFi network (phone hotspot)

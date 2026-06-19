@@ -1,7 +1,7 @@
 // WiFi library — built into the ESP32, lets us create a server that the laptop connects to
 #include <WiFi.h>
 
-// ===== WiFi credentials =====
+//       WiFi credentials
 // Must match your phone hotspot exactly (case-sensitive, no extra spaces)
 // Both the ESP32 and the laptop need to be on this same network
 const char* ssid     = "YOUR_WIFI_NAME";     // <-- Change to your hotspot name
